@@ -2,3 +2,4 @@ streamlit
 pyrebase
 Pillow
 pycryptodome
+google-cloud-storage
