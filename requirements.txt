@@ -3,3 +3,4 @@ pyrebase
 Pillow
 pycryptodome
 google-cloud-storage
+setuptools
