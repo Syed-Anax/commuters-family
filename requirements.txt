@@ -1,7 +1,6 @@
 streamlit
-pyrebase
+pyrebase4
 Pillow
 pycryptodome
 google-cloud-storage
 setuptools
-requests==2.21.0
