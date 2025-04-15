@@ -37,3 +37,10 @@ def show_login_signup():
 
 if __name__ == "__main__":
     show_login_signup()
+# login_signup.py
+
+import streamlit as st
+
+def login_signup():
+    st.title("Login or Signup")
+    st.write("This is a placeholder login/signup page.")
