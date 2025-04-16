@@ -4,13 +4,14 @@ import os
 def show_splash_screens():
     # List of splash screen image paths (inside carpool_app/images folder)
     splash_images = [
-        "carpool_app/images/splash1.png",
-        "carpool_app/images/splash2.png",
-        "carpool_app/images/splash3.png",
-        "carpool_app/images/splash4.png",
-        "carpool_app/images/splash5.png",
-        "carpool_app/images/splash6.png",
-        "carpool_app/images/splash7.png",
+    "carpool_app/images/splash1.png",
+    "carpool_app/images/splash2.png",
+    "carpool_app/images/splash3.png",
+    "carpool_app/images/splash4.png",
+    "carpool_app/images/splash5.png",
+    "carpool_app/images/splash6.png",
+    "carpool_app/images/splash7.png",
+]
     ]
 
     if 'splash_index' not in st.session_state:
