@@ -19,8 +19,8 @@ def show_homepage():
         unsafe_allow_html=True,
     )
 
-    logo = Image.open("images/logo.png")
-    st.image(logo, width=150, use_container_width=False)
+    logo = Image.open("carpool_app/images/logo.png")
+st.image(logo, width=150)
 
     st.markdown("<h2 style='text-align: center;'>Welcome to Commuters Family 🚗🇵🇰</h2>", unsafe_allow_html=True)
     st.markdown("---")
