@@ -1,4 +1,3 @@
-# main_app.py
 import streamlit as st
 from carpool_app.splash_screens import show_splash_screens
 from carpool_app.login_signup import login_signup
