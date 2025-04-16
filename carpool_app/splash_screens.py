@@ -1,10 +1,8 @@
-# carpool_app/splash_screens.py
-
 import streamlit as st
-from PIL import Image
 import os
 
 def show_splash_screens():
+    # List of splash screen image paths (inside carpool_app/images folder)
     splash_images = [
         "carpool_app/images/splash1.png",
         "carpool_app/images/splash2.png",
@@ -15,23 +13,23 @@ def show_splash_screens():
         "carpool_app/images/splash7.png",
     ]
 
-    if "splash_index" not in st.session_state:
+    if 'splash_index' not in st.session_state:
         st.session_state.splash_index = 0
 
-    current_image = splash_images[st.session_state.splash_index]
+    current_index = st.session_state.splash_index
+    current_image = splash_images[current_index]
 
+    # ✅ Check if image file exists
     if os.path.exists(current_image):
-        image = Image.open(current_image)
-        st.image(image, use_container_width=True)
+        st.image(current_image, use_container_width=True)
     else:
-        st.error(f"❌ Image not found: {current_image}")
+        st.warning(f"Image not found: {current_image}")
 
-    if st.session_state.splash_index < len(splash_images) - 1:
-        if st.button("Next"):
+    # Next button
+    if st.button("Next ➡"):
+        if current_index < len(splash_images) - 1:
             st.session_state.splash_index += 1
             st.experimental_rerun()
-    else:
-        if st.button("Get Started"):
-            st.session_state.page = "auth"
-            del st.session_state.splash_index
+        else:
+            st.session_state.page = 'auth'
             st.experimental_rerun()
