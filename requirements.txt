@@ -1,6 +1,4 @@
 streamlit
-pyrebase4
-Pillow
-pycryptodome
-google-cloud-storage
-setuptools
+firebase-admin
+geopy
+streamlit-folium
