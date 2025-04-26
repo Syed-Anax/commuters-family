@@ -1,38 +1,37 @@
-import pyrebase
+import requests
 import streamlit as st
 import firebase_admin
-from firebase_admin import credentials, auth, firestore
-import json
+from firebase_admin import credentials, firestore
 
-# Load Firebase credentials from Streamlit secrets
-firebase_secrets = dict(st.secrets["firebase"])
-
-firebase_config = {
-    "apiKey": firebase_secrets.get("api_key"),
-    "authDomain": f"{firebase_secrets.get('project_id')}.firebaseapp.com",
-    "databaseURL": "",
-    "projectId": firebase_secrets.get("project_id"),
-    "storageBucket": f"{firebase_secrets.get('project_id')}.appspot.com",
-    "messagingSenderId": firebase_secrets.get("client_id"),
-    "appId": firebase_secrets.get("app_id"),
-}
-
-firebase = pyrebase.initialize_app(firebase_config)
-firebase_auth = firebase.auth()
-
-# Initialize Firestore DB
+# Initialize Firebase Admin SDK
 if not firebase_admin._apps:
+    firebase_secrets = dict(st.secrets["firebase"])
     cred = credentials.Certificate(firebase_secrets)
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
 
-def send_otp(phone_number):
-    return firebase_auth.sign_in_with_phone_number(phone_number)
+# Firebase REST API endpoints
+API_KEY = st.secrets["firebase"]["api_key"]
+FIREBASE_AUTH_BASE_URL = "https://identitytoolkit.googleapis.com/v1"
 
-def verify_otp(verification_id, otp):
-    return firebase_auth.sign_in_with_custom_token(verification_id)
+def send_otp(phone_number):
+    url = f"{FIREBASE_AUTH_BASE_URL}/accounts:sendVerificationCode?key={API_KEY}"
+    payload = {
+        "phoneNumber": phone_number,
+        "recaptchaToken": "mock"  # Streamlit Web can't handle reCAPTCHA easily, simulation for now
+    }
+    response = requests.post(url, json=payload)
+    return response.json()
+
+def verify_otp(session_info, otp_code):
+    url = f"{FIREBASE_AUTH_BASE_URL}/accounts:signInWithPhoneNumber?key={API_KEY}"
+    payload = {
+        "sessionInfo": session_info,
+        "code": otp_code
+    }
+    response = requests.post(url, json=payload)
+    return response.json()
 
 def save_user_profile(uid, data):
     db.collection('users').document(uid).set(data)
-
