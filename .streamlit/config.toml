@@ -1,5 +1,5 @@
-streamlit
-firebase-admin
-geopy
-streamlit-folium
-pyrebase4
+[server]
+headless = true
+port = 8501
+enableCORS = false
+
