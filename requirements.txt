@@ -2,3 +2,4 @@ streamlit
 firebase-admin
 geopy
 streamlit-folium
+pyngrok
