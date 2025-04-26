@@ -3,3 +3,4 @@ firebase-admin
 geopy
 streamlit-folium
 pyrebase4
+gcloud
