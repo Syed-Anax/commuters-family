@@ -25,7 +25,7 @@ if menu == "Signup/Login":
         if otp == "123456":
             st.session_state.user = phone_number
             st.success("✅ Phone verified successfully!")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("❌ Invalid OTP. Please enter '123456'.")
 
