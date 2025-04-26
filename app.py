@@ -1,52 +1,59 @@
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, auth
+import json
 
 # Initialize Firebase only once
 if not firebase_admin._apps:
-    import json
-
-firebase_secrets = st.secrets["firebase"]
-cred = credentials.Certificate(json.loads(json.dumps(firebase_secrets)))
-firebase_admin.initialize_app(cred)
-
+    firebase_secrets = st.secrets["firebase"]
+    cred = credentials.Certificate(json.loads(json.dumps(firebase_secrets)))
     firebase_admin.initialize_app(cred)
 
+# Title
+st.set_page_config(page_title="Commuters Family", layout="centered")
 st.title("🚌 Commuters Family App")
 
+# Sidebar menu
 menu = st.sidebar.selectbox("Menu", ["Signup", "Login", "Dashboard"])
 
+# Session state to track logged in user
 if "user" not in st.session_state:
     st.session_state.user = None
 
-# Signup
+# --- Signup ---
 if menu == "Signup":
-    st.subheader("Create New Account")
+    st.subheader("🔐 Create New Account")
     email = st.text_input("Email")
     password = st.text_input("Password", type="password")
+    
     if st.button("Signup"):
         try:
-            user = auth.create_user(email=email, password=password)
-            st.success("Signup successful! Please login now.")
+            user = auth.create_user(
+                email=email,
+                password=password
+            )
+            st.success("✅ Signup successful! Please login now.")
         except Exception as e:
-            st.error(f"Signup error: {e}")
+            st.error(f"❌ Signup failed: {e}")
 
-# Login
+# --- Login ---
 elif menu == "Login":
-    st.subheader("Login to your account")
+    st.subheader("🔑 Login to Your Account")
     email = st.text_input("Email", key="login_email")
     password = st.text_input("Password", type="password", key="login_pass")
+    
     if st.button("Login"):
         try:
             user = auth.get_user_by_email(email)
             st.session_state.user = user.uid
-            st.success("Login successful!")
+            st.success("✅ Login successful!")
         except Exception as e:
-            st.error(f"Login error: {e}")
+            st.error(f"❌ Login failed: {e}")
 
-# Dashboard
+# --- Dashboard ---
 elif menu == "Dashboard":
     if not st.session_state.user:
-        st.warning("Please login first.")
+        st.warning("⚠️ Please login first to access the dashboard.")
     else:
-        st.success("Welcome to your Dashboard!")
+        st.success("🎯 Welcome to your Dashboard!")
+        st.write("More dashboard features coming soon...")
