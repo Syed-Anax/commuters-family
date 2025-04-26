@@ -4,7 +4,12 @@ from firebase_admin import credentials, auth
 
 # Initialize Firebase only once
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase_key.json")
+    import json
+
+firebase_secrets = st.secrets["firebase"]
+cred = credentials.Certificate(json.loads(json.dumps(firebase_secrets)))
+firebase_admin.initialize_app(cred)
+
     firebase_admin.initialize_app(cred)
 
 st.title("🚌 Commuters Family App")
