@@ -1,9 +1,7 @@
 import streamlit as st
 from utils.firebase_helper import save_user_profile
-import requests
 from streamlit_folium import st_folium
 import folium
-from streamlit_geocoder import geocoder
 
 st.set_page_config(page_title="Commuters Family", layout="centered")
 st.title("🚌 Commuters Family App")
@@ -74,11 +72,11 @@ if menu == "Dashboard" or st.session_state.page == "dashboard":
         gender = st.radio("Gender", ["Male", "Female"])
         cnic = st.text_input("CNIC Number (Optional)")
 
-        st.subheader("📍 Set Home Location (Search)")
-        home_location = geocoder("Enter Home Location")
+        st.subheader("📍 Set Home Location (Text Input)")
+        home_location = st.text_input("Enter Home Location (City or Area)")
 
-        st.subheader("🏢 Set Destination Location (Search)")
-        destination_location = geocoder("Enter Destination Location")
+        st.subheader("🏢 Set Destination Location (Text Input)")
+        destination_location = st.text_input("Enter Destination Location (City or Area)")
 
         morning_time = st.time_input("Morning Travel Time")
         evening_time = st.time_input("Evening Travel Time")
