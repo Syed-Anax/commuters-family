@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit_lottie import st_lottie
 from utils.firebase_helper import save_user_profile
 import requests
 from streamlit_folium import st_folium
@@ -8,16 +7,6 @@ from streamlit_geocoder import geocoder
 
 st.set_page_config(page_title="Commuters Family", layout="centered")
 st.title("🚌 Commuters Family App")
-
-# Load Lottie Animations
-def load_lottieurl(url: str):
-    r = requests.get(url)
-    if r.status_code != 200:
-        return None
-    return r.json()
-
-lottie_login = load_lottieurl("https://assets2.lottiefiles.com/packages/lf20_cg3zkg.json")
-lottie_success = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_bhw1ul4g.json")
 
 # Session State
 if "page" not in st.session_state:
@@ -30,7 +19,6 @@ menu = st.sidebar.radio("Navigate", ["Home", "Login", "Signup", "Dashboard"])
 
 # Home Page
 if menu == "Home":
-    st_lottie(lottie_login, height=300)
     st.header("Welcome to Commuters Family App")
     st.markdown("🚀 Find your daily commuting partner with ease!")
 
@@ -42,13 +30,12 @@ if menu == "Login":
     if st.button("Send OTP"):
         if phone:
             st.success("✅ Simulated OTP sent: Use 123456")
-    
+
     otp = st.text_input("Enter OTP")
     if st.button("Verify OTP"):
         if otp == "123456":
             st.session_state.user = phone
             st.success("✅ Login Successful!")
-            st_lottie(lottie_success, height=200)
             st.session_state.page = "dashboard"
             st.rerun()
         else:
@@ -62,13 +49,12 @@ if menu == "Signup":
     if st.button("Send OTP [Signup]"):
         if phone:
             st.success("✅ Simulated OTP sent: Use 123456")
-    
+
     otp = st.text_input("Enter OTP [Signup]")
     if st.button("Verify OTP [Signup]"):
         if otp == "123456":
             st.session_state.user = phone
             st.success("✅ Signup Successful!")
-            st_lottie(lottie_success, height=200)
             st.session_state.page = "dashboard"
             st.rerun()
         else:
@@ -114,4 +100,3 @@ if menu == "Dashboard" or st.session_state.page == "dashboard":
             }
             save_user_profile(st.session_state.user, profile_data)
             st.success("✅ Profile saved successfully!")
-            st_lottie(lottie_success, height=200)
