@@ -1,38 +1,83 @@
 import streamlit as st
+from streamlit_lottie import st_lottie
+from utils.firebase_helper import save_user_profile
+import requests
 from streamlit_folium import st_folium
 import folium
+from streamlit_geocoder import geocoder
 
 st.set_page_config(page_title="Commuters Family", layout="centered")
 st.title("🚌 Commuters Family App")
 
+# Load Lottie Animations
+def load_lottieurl(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+lottie_login = load_lottieurl("https://assets2.lottiefiles.com/packages/lf20_cg3zkg.json")
+lottie_success = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_bhw1ul4g.json")
+
+# Session State
+if "page" not in st.session_state:
+    st.session_state.page = "home"
 if "user" not in st.session_state:
     st.session_state.user = None
 
-menu = st.sidebar.selectbox("Menu", ["Signup/Login", "Dashboard"])
+# Navigation
+menu = st.sidebar.radio("Navigate", ["Home", "Login", "Signup", "Dashboard"])
 
-# Mobile Number Authentication Flow
-if menu == "Signup/Login":
-    st.subheader("📱 Mobile Number Login")
+# Home Page
+if menu == "Home":
+    st_lottie(lottie_login, height=300)
+    st.header("Welcome to Commuters Family App")
+    st.markdown("🚀 Find your daily commuting partner with ease!")
 
-    phone_number = st.text_input("Enter Mobile Number (with +92 format)")
+# Login Page
+if menu == "Login":
+    st.subheader("🔐 Login with Mobile Number (Simulated)")
+    phone = st.text_input("Enter Mobile Number (+92...)")
 
     if st.button("Send OTP"):
-        if phone_number:
-            st.success("✅ Simulated OTP sent: Enter '123456' to verify!")
-
-    otp = st.text_input("Enter OTP Code")
+        if phone:
+            st.success("✅ Simulated OTP sent: Use 123456")
+    
+    otp = st.text_input("Enter OTP")
     if st.button("Verify OTP"):
         if otp == "123456":
-            st.session_state.user = phone_number
-            st.success("✅ Phone verified successfully!")
+            st.session_state.user = phone
+            st.success("✅ Login Successful!")
+            st_lottie(lottie_success, height=200)
+            st.session_state.page = "dashboard"
             st.rerun()
         else:
-            st.error("❌ Invalid OTP. Please enter '123456'.")
+            st.error("❌ Invalid OTP. Use 123456.")
 
-# After Login
-elif menu == "Dashboard":
+# Signup Page
+if menu == "Signup":
+    st.subheader("📝 Signup with Mobile Number (Simulated)")
+    phone = st.text_input("Enter Mobile Number (+92...) [Signup]")
+
+    if st.button("Send OTP [Signup]"):
+        if phone:
+            st.success("✅ Simulated OTP sent: Use 123456")
+    
+    otp = st.text_input("Enter OTP [Signup]")
+    if st.button("Verify OTP [Signup]"):
+        if otp == "123456":
+            st.session_state.user = phone
+            st.success("✅ Signup Successful!")
+            st_lottie(lottie_success, height=200)
+            st.session_state.page = "dashboard"
+            st.rerun()
+        else:
+            st.error("❌ Invalid OTP. Use 123456.")
+
+# Dashboard Page
+if menu == "Dashboard" or st.session_state.page == "dashboard":
     if not st.session_state.user:
-        st.warning("⚠️ Please login first.")
+        st.warning("⚠️ Please login or signup first.")
     else:
         st.success(f"🎯 Welcome {st.session_state.user}!")
 
@@ -43,28 +88,30 @@ elif menu == "Dashboard":
         gender = st.radio("Gender", ["Male", "Female"])
         cnic = st.text_input("CNIC Number (Optional)")
 
-        st.subheader("📍 Set Home Location")
-        home_map = folium.Map(location=[24.8607, 67.0011], zoom_start=12)
-        folium.LatLngPopup().add_to(home_map)
-        home_result = st_folium(home_map, height=300, width=700)
+        st.subheader("📍 Set Home Location (Search)")
+        home_location = geocoder("Enter Home Location")
 
-        home_lat, home_lng = None, None
-        if home_result and home_result.get("last_clicked"):
-            home_lat = home_result["last_clicked"]["lat"]
-            home_lng = home_result["last_clicked"]["lng"]
-
-        st.subheader("🏢 Set Destination Location")
-        dest_map = folium.Map(location=[24.8600, 67.0100], zoom_start=12)
-        folium.LatLngPopup().add_to(dest_map)
-        dest_result = st_folium(dest_map, height=300, width=700)
-
-        dest_lat, dest_lng = None, None
-        if dest_result and dest_result.get("last_clicked"):
-            dest_lat = dest_result["last_clicked"]["lat"]
-            dest_lng = dest_result["last_clicked"]["lng"]
+        st.subheader("🏢 Set Destination Location (Search)")
+        destination_location = geocoder("Enter Destination Location")
 
         morning_time = st.time_input("Morning Travel Time")
         evening_time = st.time_input("Evening Travel Time")
 
+        travel_days = st.multiselect("Select Travel Days", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
+
         if st.button("Save Profile"):
-            st.success("✅ Profile saved successfully! (Simulated)")
+            profile_data = {
+                "phone_number": st.session_state.user,
+                "name": name,
+                "gender": gender,
+                "cnic": cnic,
+                "role": role,
+                "home_location": home_location,
+                "destination_location": destination_location,
+                "morning_time": morning_time.strftime("%H:%M"),
+                "evening_time": evening_time.strftime("%H:%M"),
+                "travel_days": travel_days
+            }
+            save_user_profile(st.session_state.user, profile_data)
+            st.success("✅ Profile saved successfully!")
+            st_lottie(lottie_success, height=200)
