@@ -1,7 +1,7 @@
 streamlit
 firebase-admin
 geopy
-streamlit-folium
-streamlit-geocoder
-streamlit-lottie
 requests
+streamlit-folium
+streamlit-lottie
+streamlit-geocoder
