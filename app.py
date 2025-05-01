@@ -118,3 +118,33 @@ if st.session_state.page == "dashboard" and st.session_state.user:
     if st.button("Logout"):
         st.session_state.page = "start"
         st.session_state.user = None
+from utils.matching_helper import get_matches
+
+st.subheader("🔍 Find Commuter Matches")
+
+if st.button("Find Matches"):
+    current_user = {
+        "phone_number": st.session_state.user,
+        "name": name,
+        "gender": gender,
+        "cnic": cnic,
+        "role": role,
+        "home_location": home_location,
+        "destination_location": destination_location,
+        "morning_time": morning_time.strftime("%H:%M"),
+        "evening_time": evening_time.strftime("%H:%M"),
+        "travel_days": travel_days
+    }
+
+    match_results = get_matches(current_user)
+
+    if match_results:
+        st.success(f"✅ {len(match_results)} matches found!")
+        for match in match_results:
+            st.info(f"👤 {match['name']} | {match['role']} | {match['gender']}")
+            st.write(f"📍 {match['home_location']} ➡ {match['destination_location']}")
+            st.write(f"🕒 {match['morning_time']} / {match['evening_time']}")
+            st.write(f"📅 Days: {', '.join(match['travel_days'])}")
+            st.markdown("---")
+    else:
+        st.warning("😕 No matching commuters found. Try adjusting your schedule or location.")
