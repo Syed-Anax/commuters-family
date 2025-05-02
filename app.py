@@ -1,87 +1,88 @@
-from utils.firebase_helper import get_user_profile, upgrade_to_premium, check_if_premium
-from utils.alert_helper import get_today_alert
-from utils.firebase_helper import get_user_profile
-# app.py (with auto-navigation + match-based dashboard + connect button + free limit)
-from utils.notification_helper import get_travel_alert
-from utils.chat_helper import get_messages, send_message
 import streamlit as st
-from utils.firebase_helper import save_user_profile, get_user_profile
+from utils.firebase_helper import (
+    save_user_profile,
+    get_user_profile,
+    upgrade_to_premium,
+    check_if_premium,
+)
 from utils.matching_helper import get_matches
-from firebase_admin import firestore
-from datetime import datetime
+from utils.chat_helper import get_messages, send_message
+from utils.notification_helper import get_travel_alert
 
 st.set_page_config(page_title="Commuters Family", layout="centered")
-st.title("🚌 Commuters Family App")
 
-db = firestore.client()
-
-# Session State
+# Session setup
 if "page" not in st.session_state:
     st.session_state.page = "start"
 if "user" not in st.session_state:
     st.session_state.user = None
+if "unlocked_matches" not in st.session_state:
+    st.session_state.unlocked_matches = []
+if "unlocked_count" not in st.session_state:
+    st.session_state.unlocked_count = 0
+MAX_FREE_UNLOCKS = 3
 
-# Check if profile already exists
-def profile_exists(phone):
-    return db.collection("users").document(phone).get().exists
-
-# ------------------------------
-# PAGE FLOW START
-# ------------------------------
+# Start page
 if st.session_state.page == "start":
-    st.header("Welcome to Commuters Family App! 🚀")
+    st.title("🚌 Commuters Family App")
+    st.subheader("Match with daily commuters like you!")
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Signup"):
+        if st.button("🚀 Signup"):
             st.session_state.page = "signup"
     with col2:
-        if st.button("Login"):
+        if st.button("🔐 Login"):
             st.session_state.page = "login"
 
+# Signup page
 if st.session_state.page == "signup":
-    st.subheader("📝 Signup with Mobile Number (Simulated)")
-    phone = st.text_input("Enter Mobile Number (+92...) [Signup]")
+    st.subheader("📝 Signup")
+    phone = st.text_input("Enter Mobile Number (+92...)")
     if st.button("Send OTP [Signup]"):
         if phone:
             st.session_state.temp_phone = phone
-            st.success("✅ Simulated OTP sent! Use 123456")
+            st.success("✅ Simulated OTP sent. Use 123456.")
             st.session_state.page = "verify_signup"
 
+# Signup OTP
 if st.session_state.page == "verify_signup":
-    st.subheader("🔐 Verify OTP for Signup")
     otp = st.text_input("Enter OTP [Signup]")
     if st.button("Verify OTP [Signup]"):
         if otp == "123456":
             st.session_state.user = st.session_state.temp_phone
             st.success("✅ Signup Successful!")
-            st.session_state.page = "profile"
+            if get_user_profile(st.session_state.user):
+                st.session_state.page = "dashboard"
+            else:
+                st.session_state.page = "profile"
         else:
-            st.error("❌ Invalid OTP. Please enter 123456.")
+            st.error("❌ Invalid OTP. Use 123456.")
 
+# Login page
 if st.session_state.page == "login":
-    st.subheader("🔐 Login with Mobile Number (Simulated)")
-    phone = st.text_input("Enter Mobile Number (+92...) [Login]")
+    st.subheader("🔐 Login")
+    phone = st.text_input("Enter Mobile Number (+92...)")
     if st.button("Send OTP [Login]"):
         if phone:
             st.session_state.temp_phone = phone
-            st.success("✅ Simulated OTP sent! Use 123456")
+            st.success("✅ Simulated OTP sent. Use 123456.")
             st.session_state.page = "verify_login"
 
+# Login OTP
 if st.session_state.page == "verify_login":
-    st.subheader("🔐 Verify OTP for Login")
     otp = st.text_input("Enter OTP [Login]")
     if st.button("Verify OTP [Login]"):
         if otp == "123456":
             st.session_state.user = st.session_state.temp_phone
             st.success("✅ Login Successful!")
-            # Check profile
-            if profile_exists(st.session_state.user):
+            if get_user_profile(st.session_state.user):
                 st.session_state.page = "dashboard"
             else:
                 st.session_state.page = "profile"
         else:
-            st.error("❌ Invalid OTP. Please enter 123456.")
+            st.error("❌ Invalid OTP. Use 123456.")
 
+# Profile form
 if st.session_state.page == "profile" and st.session_state.user:
     st.subheader("👤 Complete Your Profile")
 
@@ -89,11 +90,17 @@ if st.session_state.page == "profile" and st.session_state.user:
     name = st.text_input("Full Name")
     gender = st.radio("Gender", ["Male", "Female"])
     cnic = st.text_input("CNIC Number (Optional)")
-    home_location = st.text_input("Home Location (City or Area)")
-    destination_location = st.text_input("Destination Location (City or Area)")
+
+    home_location = st.text_input("Home Location (e.g., Gulshan)")
+    destination_location = st.text_input("Destination Location (e.g., Saddar)")
+
     morning_time = st.time_input("Morning Travel Time")
     evening_time = st.time_input("Evening Travel Time")
-    travel_days = st.multiselect("Select Travel Days", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
+
+    travel_days = st.multiselect(
+        "Select Travel Days",
+        ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    )
 
     if st.button("Save Profile"):
         profile_data = {
@@ -106,71 +113,86 @@ if st.session_state.page == "profile" and st.session_state.user:
             "destination_location": destination_location,
             "morning_time": morning_time.strftime("%H:%M"),
             "evening_time": evening_time.strftime("%H:%M"),
-            "travel_days": travel_days
+            "travel_days": travel_days,
         }
         save_user_profile(st.session_state.user, profile_data)
-        st.success("✅ Profile Saved Successfully!")
+        st.success("✅ Profile Saved!")
         st.session_state.page = "dashboard"
-
+# Dashboard
 if st.session_state.page == "dashboard" and st.session_state.user:
-    st.header("🌟 Your Matches")
-    profile = get_user_profile(st.session_state.user)
-    matches = get_matches(profile)
+    st.subheader("🎯 Dashboard")
 
-    # Contact Unlock System
-    if "unlocked_matches" not in st.session_state:
-        st.session_state.unlocked_matches = []
-    if "unlocked_count" not in st.session_state:
-        st.session_state.unlocked_count = 0
-    MAX_FREE_UNLOCKS = 3
-
-    if matches:
-        for match in matches:
-            st.info(f"👤 {match['name']} ({match['role']})")
-            st.write(f"📍 {match['home_location']} ➡ {match['destination_location']}")
-            st.write(f"🕒 {match['morning_time']} - {match['evening_time']}")
-            st.write(f"📅 Days: {', '.join(match['travel_days'])}")
-
-            if match["phone_number"] in st.session_state.unlocked_matches:
-                st.success(f"📞 Contact: {match['phone_number']}")
-            elif st.button(f"Connect with {match['name']}", key=match['phone_number']):
-                if is_premium or st.session_state.unlocked_count < MAX_FREE_UNLOCKS:
-                    st.session_state.unlocked_matches.append(match["phone_number"])
-                    st.session_state.unlocked_count += 1
-                    st.success(f"📞 Contact Unlocked: {match['phone_number']}")
-                else:
-                    st.warning("🔐 Match limit reached. Please upgrade your plan to unlock more contacts.")
-            st.markdown("---")
+    # Load user profile
+    user_profile = get_user_profile(st.session_state.user)
+    if not user_profile:
+        st.warning("⚠️ Profile not found.")
     else:
-        st.warning("No matching users found right now. Try updating your profile.")
+        # 🚨 Travel Alert
+        alert = None
+        alert = get_travel_alert(user_profile)
+        if alert:
+            st.info(alert)
 
-    if st.button("Logout"):
-        st.session_state.page = "start"
-        st.session_state.user = None
-user_profile = get_user_profile(st.session_state.user)
-if user_profile:
-    st.subheader("🔔 Today's Travel Alert")
-    alert = get_today_alert(user_profile)
-    st.info(alert)
-is_premium = check_if_premium(st.session_state.user)
-if not is_premium:
-    if st.button("🚀 Upgrade to Premium (PKR 500) [Demo Mode]"):
-        upgrade_to_premium(st.session_state.user)
-        st.success("✅ You are now a Premium Member! Unlimited matches unlocked.")
-        st.rerun()
-if user_profile:
-    alert = get_travel_alert(user_profile)
-    if alert:
-        st.warning(alert)
-if alert:
-    st.warning(alert)
-    if match["phone_number"] in st.session_state.unlocked_matches or is_premium:
-        with st.expander(f"💬 Chat with {match['name']}"):
-            messages = get_messages(st.session_state.user, match["phone_number"])
-            for msg in messages:
-                st.write(f"🗨️ {msg['from']}: {msg['text']}")
+        # 👑 Premium Check
+        is_premium = check_if_premium(st.session_state.user)
 
-            new_msg = st.text_input(f"Type a message to {match['name']}", key=f"msg_{match['phone_number']}")
-            if st.button(f"Send to {match['name']}", key=f"send_{match['phone_number']}"):
-                send_message(st.session_state.user, match["phone_number"], new_msg)
-                st.success("✅ Message sent!")
+        if not is_premium:
+            if st.button("🚀 Upgrade to Premium (PKR 500) [Simulated]"):
+                upgrade_to_premium(st.session_state.user)
+                st.success("✅ You are now a Premium Member!")
+                st.rerun()
+
+        # 🧠 Find Matches
+        matches = get_matches(user_profile)
+
+        if matches:
+            st.success(f"✅ {len(matches)} matches found!")
+            for match in matches:
+                with st.expander(f"👤 {match['name']} | {match['role']} | {match['gender']}"):
+                    st.write(f"📍 {match['home_location']} ➡ {match['destination_location']}")
+                    st.write(f"🕒 {match['morning_time']} / {match['evening_time']}")
+                    st.write(f"📅 Days: {', '.join(match['travel_days'])}")
+
+                    # 🔐 Unlock contact logic
+                    if match["phone_number"] in st.session_state.unlocked_matches or is_premium:
+                        st.success(f"📞 Contact: {match['phone_number']}")
+                    elif st.button(f"Connect with {match['name']}", key=match["phone_number"]):
+                        if is_premium or st.session_state.unlocked_count < MAX_FREE_UNLOCKS:
+                            st.session_state.unlocked_matches.append(match["phone_number"])
+                            st.session_state.unlocked_count += 1
+                            st.success(f"📞 Contact Unlocked: {match['phone_number']}")
+                        else:
+                            st.warning("🔐 Free match limit reached. Upgrade to unlock more.")
+
+                    # 💬 Chat
+                    if match["phone_number"] in st.session_state.unlocked_matches or is_premium:
+                        with st.expander(f"💬 Chat with {match['name']}"):
+                            messages = get_messages(
+                                st.session_state.user, match["phone_number"]
+                            )
+                            for msg in messages:
+                                st.write(f"🗨️ {msg['from']}: {msg['text']}")
+                            new_msg = st.text_input(
+                                f"Message to {match['name']}",
+                                key=f"msg_{match['phone_number']}",
+                            )
+                            if st.button(f"Send to {match['name']}", key=f"send_{match['phone_number']}"):
+                                if new_msg.strip() != "":
+                                    send_message(
+                                        st.session_state.user,
+                                        match["phone_number"],
+                                        new_msg,
+                                    )
+                                    st.success("✅ Message sent!")
+                                    st.rerun()
+        else:
+            st.warning("😕 No matches found right now. Try updating your schedule or location.")
+
+        # 🔚 Logout
+        st.markdown("---")
+        if st.button("🚪 Logout"):
+            st.session_state.page = "start"
+            st.session_state.user = None
+            st.session_state.unlocked_matches = []
+            st.session_state.unlocked_count = 0
+            st.experimental_rerun()
