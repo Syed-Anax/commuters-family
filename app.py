@@ -1,3 +1,4 @@
+from utils.firebase_helper import get_user_profile, upgrade_to_premium, check_if_premium
 from utils.alert_helper import get_today_alert
 from utils.firebase_helper import get_user_profile
 # app.py (with auto-navigation + match-based dashboard + connect button + free limit)
@@ -131,7 +132,7 @@ if st.session_state.page == "dashboard" and st.session_state.user:
             if match["phone_number"] in st.session_state.unlocked_matches:
                 st.success(f"📞 Contact: {match['phone_number']}")
             elif st.button(f"Connect with {match['name']}", key=match['phone_number']):
-                if st.session_state.unlocked_count < MAX_FREE_UNLOCKS:
+                if is_premium or st.session_state.unlocked_count < MAX_FREE_UNLOCKS:
                     st.session_state.unlocked_matches.append(match["phone_number"])
                     st.session_state.unlocked_count += 1
                     st.success(f"📞 Contact Unlocked: {match['phone_number']}")
@@ -149,3 +150,9 @@ if user_profile:
     st.subheader("🔔 Today's Travel Alert")
     alert = get_today_alert(user_profile)
     st.info(alert)
+is_premium = check_if_premium(st.session_state.user)
+if not is_premium:
+    if st.button("🚀 Upgrade to Premium (PKR 500) [Demo Mode]"):
+        upgrade_to_premium(st.session_state.user)
+        st.success("✅ You are now a Premium Member! Unlimited matches unlocked.")
+        st.rerun()
