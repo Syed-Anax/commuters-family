@@ -162,6 +162,8 @@ if user_profile:
     alert = get_travel_alert(user_profile)
     if alert:
         st.warning(alert)
+        else:
+    st.info("ℹ️ Your profile could not be loaded.")
 if alert:
     st.warning(alert)
     if match["phone_number"] in st.session_state.unlocked_matches or is_premium:
