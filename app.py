@@ -158,7 +158,10 @@ if not is_premium:
         upgrade_to_premium(st.session_state.user)
         st.success("✅ You are now a Premium Member! Unlimited matches unlocked.")
         st.rerun()
-alert = get_travel_alert(user_profile)
+if user_profile:
+    alert = get_travel_alert(user_profile)
+    if alert:
+        st.warning(alert)
 if alert:
     st.warning(alert)
     if match["phone_number"] in st.session_state.unlocked_matches or is_premium:
