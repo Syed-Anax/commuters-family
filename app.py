@@ -1,20 +1,28 @@
+# app.py (with auto-navigation + match-based dashboard + connect button + free limit)
 import streamlit as st
-from utils.firebase_helper import save_user_profile
+from utils.firebase_helper import save_user_profile, get_user_profile
+from utils.matching_helper import get_matches
+from firebase_admin import firestore
+from datetime import datetime
 
 st.set_page_config(page_title="Commuters Family", layout="centered")
 st.title("🚌 Commuters Family App")
 
-# Session Setup
+db = firestore.client()
+
+# Session State
 if "page" not in st.session_state:
     st.session_state.page = "start"
 if "user" not in st.session_state:
     st.session_state.user = None
 
+# Check if profile already exists
+def profile_exists(phone):
+    return db.collection("users").document(phone).get().exists
+
 # ------------------------------
 # PAGE FLOW START
 # ------------------------------
-
-# Start Page: Signup or Login options
 if st.session_state.page == "start":
     st.header("Welcome to Commuters Family App! 🚀")
     col1, col2 = st.columns(2)
@@ -25,22 +33,18 @@ if st.session_state.page == "start":
         if st.button("Login"):
             st.session_state.page = "login"
 
-# Signup Page
 if st.session_state.page == "signup":
     st.subheader("📝 Signup with Mobile Number (Simulated)")
     phone = st.text_input("Enter Mobile Number (+92...) [Signup]")
-
     if st.button("Send OTP [Signup]"):
         if phone:
             st.session_state.temp_phone = phone
             st.success("✅ Simulated OTP sent! Use 123456")
             st.session_state.page = "verify_signup"
 
-# Verify Signup OTP
 if st.session_state.page == "verify_signup":
     st.subheader("🔐 Verify OTP for Signup")
     otp = st.text_input("Enter OTP [Signup]")
-
     if st.button("Verify OTP [Signup]"):
         if otp == "123456":
             st.session_state.user = st.session_state.temp_phone
@@ -49,46 +53,41 @@ if st.session_state.page == "verify_signup":
         else:
             st.error("❌ Invalid OTP. Please enter 123456.")
 
-# Login Page
 if st.session_state.page == "login":
     st.subheader("🔐 Login with Mobile Number (Simulated)")
     phone = st.text_input("Enter Mobile Number (+92...) [Login]")
-
     if st.button("Send OTP [Login]"):
         if phone:
             st.session_state.temp_phone = phone
             st.success("✅ Simulated OTP sent! Use 123456")
             st.session_state.page = "verify_login"
 
-# Verify Login OTP
 if st.session_state.page == "verify_login":
     st.subheader("🔐 Verify OTP for Login")
     otp = st.text_input("Enter OTP [Login]")
-
     if st.button("Verify OTP [Login]"):
         if otp == "123456":
             st.session_state.user = st.session_state.temp_phone
             st.success("✅ Login Successful!")
-            st.session_state.page = "profile"
+            # Check profile
+            if profile_exists(st.session_state.user):
+                st.session_state.page = "dashboard"
+            else:
+                st.session_state.page = "profile"
         else:
             st.error("❌ Invalid OTP. Please enter 123456.")
 
-# Profile Completion Page
 if st.session_state.page == "profile" and st.session_state.user:
-    st.success(f"🎯 Welcome {st.session_state.user}!")
     st.subheader("👤 Complete Your Profile")
 
     role = st.radio("Role", ["Rider", "Passenger"])
     name = st.text_input("Full Name")
     gender = st.radio("Gender", ["Male", "Female"])
     cnic = st.text_input("CNIC Number (Optional)")
-
     home_location = st.text_input("Home Location (City or Area)")
     destination_location = st.text_input("Destination Location (City or Area)")
-
     morning_time = st.time_input("Morning Travel Time")
     evening_time = st.time_input("Evening Travel Time")
-
     travel_days = st.multiselect("Select Travel Days", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
 
     if st.button("Save Profile"):
@@ -108,43 +107,38 @@ if st.session_state.page == "profile" and st.session_state.user:
         st.success("✅ Profile Saved Successfully!")
         st.session_state.page = "dashboard"
 
-# Dashboard Page
 if st.session_state.page == "dashboard" and st.session_state.user:
-    st.balloons()
-    st.header("🎉 Dashboard")
-    st.success("✅ You are now fully onboarded into Commuters Family App!")
+    st.header("🌟 Your Matches")
+    profile = get_user_profile(st.session_state.user)
+    matches = get_matches(profile)
 
-    st.write("🚗 Start Finding your commute partners now...")
+    # Contact Unlock System
+    if "unlocked_matches" not in st.session_state:
+        st.session_state.unlocked_matches = []
+    if "unlocked_count" not in st.session_state:
+        st.session_state.unlocked_count = 0
+    MAX_FREE_UNLOCKS = 3
+
+    if matches:
+        for match in matches:
+            st.info(f"👤 {match['name']} ({match['role']})")
+            st.write(f"📍 {match['home_location']} ➡ {match['destination_location']}")
+            st.write(f"🕒 {match['morning_time']} - {match['evening_time']}")
+            st.write(f"📅 Days: {', '.join(match['travel_days'])}")
+
+            if match["phone_number"] in st.session_state.unlocked_matches:
+                st.success(f"📞 Contact: {match['phone_number']}")
+            elif st.button(f"Connect with {match['name']}", key=match['phone_number']):
+                if st.session_state.unlocked_count < MAX_FREE_UNLOCKS:
+                    st.session_state.unlocked_matches.append(match["phone_number"])
+                    st.session_state.unlocked_count += 1
+                    st.success(f"📞 Contact Unlocked: {match['phone_number']}")
+                else:
+                    st.warning("🔐 Match limit reached. Please upgrade your plan to unlock more contacts.")
+            st.markdown("---")
+    else:
+        st.warning("No matching users found right now. Try updating your profile.")
+
     if st.button("Logout"):
         st.session_state.page = "start"
         st.session_state.user = None
-from utils.matching_helper import get_matches
-
-st.subheader("🔍 Find Commuter Matches")
-
-if st.button("Find Matches"):
-    current_user = {
-        "phone_number": st.session_state.user,
-        "name": name,
-        "gender": gender,
-        "cnic": cnic,
-        "role": role,
-        "home_location": home_location,
-        "destination_location": destination_location,
-        "morning_time": morning_time.strftime("%H:%M"),
-        "evening_time": evening_time.strftime("%H:%M"),
-        "travel_days": travel_days
-    }
-
-    match_results = get_matches(current_user)
-
-    if match_results:
-        st.success(f"✅ {len(match_results)} matches found!")
-        for match in match_results:
-            st.info(f"👤 {match['name']} | {match['role']} | {match['gender']}")
-            st.write(f"📍 {match['home_location']} ➡ {match['destination_location']}")
-            st.write(f"🕒 {match['morning_time']} / {match['evening_time']}")
-            st.write(f"📅 Days: {', '.join(match['travel_days'])}")
-            st.markdown("---")
-    else:
-        st.warning("😕 No matching commuters found. Try adjusting your schedule or location.")
