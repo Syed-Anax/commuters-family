@@ -2,6 +2,8 @@ from utils.firebase_helper import get_user_profile, upgrade_to_premium, check_if
 from utils.alert_helper import get_today_alert
 from utils.firebase_helper import get_user_profile
 # app.py (with auto-navigation + match-based dashboard + connect button + free limit)
+from utils.notification_helper import get_travel_alert
+from utils.chat_helper import get_messages, send_message
 import streamlit as st
 from utils.firebase_helper import save_user_profile, get_user_profile
 from utils.matching_helper import get_matches
@@ -156,3 +158,16 @@ if not is_premium:
         upgrade_to_premium(st.session_state.user)
         st.success("✅ You are now a Premium Member! Unlimited matches unlocked.")
         st.rerun()
+alert = get_travel_alert(user_profile)
+if alert:
+    st.warning(alert)
+    if match["phone_number"] in st.session_state.unlocked_matches or is_premium:
+        with st.expander(f"💬 Chat with {match['name']}"):
+            messages = get_messages(st.session_state.user, match["phone_number"])
+            for msg in messages:
+                st.write(f"🗨️ {msg['from']}: {msg['text']}")
+
+            new_msg = st.text_input(f"Type a message to {match['name']}", key=f"msg_{match['phone_number']}")
+            if st.button(f"Send to {match['name']}", key=f"send_{match['phone_number']}"):
+                send_message(st.session_state.user, match["phone_number"], new_msg)
+                st.success("✅ Message sent!")
