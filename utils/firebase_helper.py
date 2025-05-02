@@ -18,7 +18,7 @@ def get_user_profile(phone_number):
     else:
         return None
 def upgrade_to_premium(phone_number):
-    db.collection("users").document(phone_number).update({"is_premium": True})
+    db.collection("users").document(phone_number).set({"is_premium": True}, merge=True)
 
 def check_if_premium(phone_number):
     doc = db.collection("users").document(phone_number).get()
