@@ -1,3 +1,5 @@
+from utils.alert_helper import get_today_alert
+from utils.firebase_helper import get_user_profile
 # app.py (with auto-navigation + match-based dashboard + connect button + free limit)
 import streamlit as st
 from utils.firebase_helper import save_user_profile, get_user_profile
@@ -142,3 +144,8 @@ if st.session_state.page == "dashboard" and st.session_state.user:
     if st.button("Logout"):
         st.session_state.page = "start"
         st.session_state.user = None
+user_profile = get_user_profile(st.session_state.user)
+if user_profile:
+    st.subheader("🔔 Today's Travel Alert")
+    alert = get_today_alert(user_profile)
+    st.info(alert)
