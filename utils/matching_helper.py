@@ -23,7 +23,7 @@ def get_matches(current_user):
     all_users = get_all_profiles()
 
     for other in all_users:
-        if other["phone_number"] == current_user["phone_number"]:
+        if other.get("phone_number") == current_user.get("phone_number"):
             continue
 
         if other["role"] == current_user["role"]:
