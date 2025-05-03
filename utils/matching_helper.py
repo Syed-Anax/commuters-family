@@ -47,3 +47,13 @@ def get_matches(current_user):
         matches.append(other)
 
     return matches
+try:
+    if (
+        other.get("phone_number") != current_user.get("phone_number")
+        and other.get("role") != current_user.get("role")
+        and other.get("home_location", "").lower() == current_user.get("home_location", "").lower()
+        and other.get("destination_location", "").lower() == current_user.get("destination_location", "").lower()
+    ):
+        matches.append(other)
+except Exception as e:
+    print("Skipping user due to error:", e)
