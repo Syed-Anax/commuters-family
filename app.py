@@ -118,6 +118,10 @@ if st.session_state.page == "profile" and st.session_state.user:
         save_user_profile(st.session_state.user, profile_data)
         st.success("✅ Profile Saved!")
         st.session_state.page = "dashboard"
+        if not name or not home_location or not destination_location or not travel_days:
+    st.error("❌ Please fill all required fields.")
+else:
+    # save the profile
 # Dashboard
 if st.session_state.page == "dashboard" and st.session_state.user:
     st.subheader("🎯 Dashboard")
