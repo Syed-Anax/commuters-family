@@ -119,8 +119,25 @@ if st.session_state.page == "profile" and st.session_state.user:
         save_user_profile(st.session_state.user, profile_data)
         st.success("✅ Profile Saved!")
         st.session_state.page = "dashboard"
-        if not name or not home_location or not destination_location or not travel_days:
-    st.error("❌ Please fill all required fields.")
+        if not name or not home_location or not destination_location or not travel_days or not email:
+    st.error("❌ Please fill all required fields including email.")
+else:
+    profile_data = {
+        "phone_number": st.session_state.user,
+        "name": name,
+        "email": email,
+        "gender": gender,
+        "cnic": cnic,
+        "role": role,
+        "home_location": home_location,
+        "destination_location": destination_location,
+        "morning_time": morning_time.strftime("%H:%M"),
+        "evening_time": evening_time.strftime("%H:%M"),
+        "travel_days": travel_days,
+    }
+    save_user_profile(st.session_state.user, profile_data)
+    st.success("✅ Profile Saved!")
+    st.session_state.page = "dashboard"
 else:
     # save the profile
 # Dashboard
