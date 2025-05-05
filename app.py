@@ -88,6 +88,7 @@ if st.session_state.page == "profile" and st.session_state.user:
 
     role = st.radio("Role", ["Rider", "Passenger"])
     name = st.text_input("Full Name")
+    email = st.text_input("Email Address (required for notifications)")
     gender = st.radio("Gender", ["Male", "Female"])
     cnic = st.text_input("CNIC Number (Optional)")
 
@@ -200,3 +201,13 @@ if st.session_state.page == "dashboard" and st.session_state.user:
             st.session_state.unlocked_matches = []
             st.session_state.unlocked_count = 0
             st.experimental_rerun()
+# Profile form
+if st.session_state.page == "profile" and st.session_state.user:
+    if not name or not home_location or not destination_location or not travel_days or not email:
+    st.error("❌ Please fill all required fields including email.")
+else:
+    profile_data = {
+        "phone_number": st.session_state.user,
+        "name": name,
+        "email": email,
+        ...
